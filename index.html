@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Benford's Law Check</title>
+</head>
+<body>
+    <p>Please enter all the numeric value included in a financial document like sales, income etc (e.g., 123, 456, 789):</p>
+    <textarea id="numbers" rows="4" placeholder="Enter comma-separated numbers"></textarea>
+    <button onclick="checkNumbers()">Check</button>
+    <p id="message"></p>
+
+    <script>
+        // Function to calculate expected frequency based on leading digit
+        function expectedFrequency(leadingDigit) {
+            return Math.log10(1 + 1 / leadingDigit);
+        }
+
+        function chiSquareTest(observed, expected) {
+            let chiSquare = 0;
+            for (let i = 1; i <= 9; i++) {
+                const o = observed[i - 1] || 0; // Handle potential missing counts
+                const e = expected[i - 1] * observed.length; // Expected count for each digit
+                chiSquare += Math.pow(o - e, 2) / e;
+            }
+            return chiSquare;
+        }
+
+        function checkNumbers() {
+            const inputText = document.getElementById('numbers').value.trim();
+            const numberArray = inputText.split(",").map(Number);
+
+            if (numberArray.length === 0) {
+                document.getElementById('message').textContent = "Please enter some numbers.";
+                return;
+            }
+
+            const leadingDigitCounts = new Array(9).fill(0); // Initialize observed counts
+            for (const number of numberArray) {
+                if (isNaN(number)) {
+                    document.getElementById('message').textContent = "Invalid input. Please enter only numbers separated by commas.";
+                    return;
+                }
+
+                const leadingDigit = Math.floor(Math.log10(number)) + 1; // Extract leading digit efficiently
+
+                if (leadingDigit < 1 || leadingDigit > 9) {
+                    document.getElementById('message').textContent = "Invalid number range. Please enter numbers between 1 and 9999999999.";
+                    return;
+                }
+
+                leadingDigitCounts[leadingDigit - 1]++;
+            }
+
+            const expectedFrequencies = [];
+            for (let i = 1; i <= 9; i++) {
+                expectedFrequencies.push(expectedFrequency(i));
+            }
+
+            const chiSquareValue = chiSquareTest(leadingDigitCounts, expectedFrequencies);
+            const significanceLevel = 0.05; // Adjust significance level as needed
+
+            const message = chiSquareValue > getChiSquareCriticalValue(9 - 1, significanceLevel) ? 
+                "Potential anomalies detected (data may not follow Benford's Law distribution)." : 
+                "Numbers seem to generally follow Benford's Law distribution (likely genuine).";
+            document.getElementById('message').textContent = message;
+        }
+
+        // Function to calculate chi-square critical value (replace with library if needed)
+        function getChiSquareCriticalValue(degreesOfFreedom, significanceLevel) {
+            // Replace with a library function for chi-square critical value lookup
+            // This is a simplified example and might require a library for accurate calculation
+            return 16.919; // Placeholder value for critical value with 8 degrees of freedom at 0.05 significance level
+        }
+    </script>
+</body>
+</html>
